@@ -13,27 +13,30 @@ import (
 	"image/color"
 	"image/gif"
 	"io"
+	"log"
 	"math"
 	"math/rand"
+	"net/http"
 	"os"
+	"time"
 )
 
 //!-main
 // Packages not needed by version in book.
-import (
-	"log"
-	"net/http"
-	"time"
-)
 
 //!+main
 
-var palette = []color.Color{color.White, color.Black}
+var palette = []color.Color{color.White,
+	color.RGBA{0xe4, 0x03, 0x03, 0xff}, // red
+	color.RGBA{0xff, 0x8c, 0x00, 0xff}, // orange
+	color.RGBA{0xff, 0xed, 0x00, 0xff}, // yellow
+	color.RGBA{0x00, 0x80, 0x26, 0xff}, // green
+	color.RGBA{0x24, 0x40, 0x8e, 0xff}, // indigo
+	color.RGBA{0x73, 0x29, 0x82, 0xff}, //  violet
 
-const (
-	whiteIndex = 0 // first color in palette
-	blackIndex = 1 // next color in palette
-)
+}
+
+const numColours = 6
 
 func main() {
 	//!-main
@@ -67,6 +70,7 @@ func lissajous(out io.Writer) {
 	freq := rand.Float64() * 3.0 // relative frequency of y oscillator
 	anim := gif.GIF{LoopCount: nframes}
 	phase := 0.0 // phase difference
+	colorIndex := 0
 	for i := 0; i < nframes; i++ {
 		rect := image.Rect(0, 0, 2*size+1, 2*size+1)
 		img := image.NewPaletted(rect, palette)
@@ -74,7 +78,8 @@ func lissajous(out io.Writer) {
 			x := math.Sin(t)
 			y := math.Sin(t*freq + phase)
 			img.SetColorIndex(size+int(x*size+0.5), size+int(y*size+0.5),
-				blackIndex)
+				uint8(colorIndex+1))
+			colorIndex = (colorIndex + 1) % numColours
 		}
 		phase += 0.1
 		anim.Delay = append(anim.Delay, delay)
