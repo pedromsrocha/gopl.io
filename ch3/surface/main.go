@@ -42,19 +42,20 @@ func surface(out io.Writer) {
 		"width='%d' height='%d'>", width, height))
 	for i := 0; i < cells; i++ {
 		for j := 0; j < cells; j++ {
-			ax, ay := corner(i+1, j)
-			bx, by := corner(i, j)
-			cx, cy := corner(i, j+1)
-			dx, dy := corner(i+1, j+1)
-			blueComp, redComp := colorHeight(ay, by, cy, dy)
+			ax, ay, aRed := corner(i+1, j)
+			bx, by, bRed := corner(i, j)
+			cx, cy, cRed := corner(i, j+1)
+			dx, dy, dRed := corner(i+1, j+1)
+			redComp := (aRed + bRed + cRed + dRed) / 4
+			blueComp := 255 - redComp
 			io.WriteString(out, fmt.Sprintf("<polygon points='%g,%g %g,%g %g,%g %g,%g' stroke = 'rgb(%d,0,%d)'/>\n",
-				ax, ay, bx, by, cx, cy, dx, dy, redComp, blueComp))
+				ax, ay, bx, by, cx, cy, dx, dy, blueComp, redComp))
 		}
 	}
 	io.WriteString(out, fmt.Sprintln("</svg>"))
 }
 
-func corner(i, j int) (float64, float64) {
+func corner(i, j int) (float64, float64, uint) {
 	// Find point (x,y) at corner of cell (i,j).
 	x := xyrange * (float64(i)/cells - 0.5)
 	y := xyrange * (float64(j)/cells - 0.5)
@@ -65,18 +66,14 @@ func corner(i, j int) (float64, float64) {
 	// Project (x,y,z) isometrically onto 2-D SVG canvas (sx,sy).
 	sx := width/2 + (x-y)*cos30*xyscale
 	sy := height/2 + (x+y)*sin30*xyscale - z*zscale
-	return sx, sy
+
+	redComp := uint((sy - (x+y)*sin30*xyscale) * 255 / height)
+	return sx, sy, redComp
 }
 
 func f(x, y float64) float64 {
 	r := math.Hypot(x, y) // distance from (0,0)
 	return math.Sin(r) / r
-}
-
-func colorHeight(ay, by, cy, dy float64) (blueComp, redComp byte) {
-	blueComp = byte((ay + by + cy + dy) * 255 / (4 * height))
-	redComp = 255 - redComp
-	return blueComp, redComp
 }
 
 //!-
