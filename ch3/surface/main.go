@@ -10,8 +10,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"math"
-	"os"
+	"net/http"
 )
 
 const (
@@ -26,7 +27,13 @@ const (
 var sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
 
 func main() {
-	surface(os.Stdout)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/svg+xml")
+		surface(w)
+	}
+	http.HandleFunc("/", handler)
+	//!-http
+	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
 func surface(out io.Writer) {
