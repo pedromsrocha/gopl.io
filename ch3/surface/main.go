@@ -46,7 +46,7 @@ func surface(out io.Writer) {
 			bx, by := corner(i, j)
 			cx, cy := corner(i, j+1)
 			dx, dy := corner(i+1, j+1)
-			io.WriteString(out, fmt.Sprintf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
+			io.WriteString(out, fmt.Sprintf("<polygon points='%g,%g %g,%g %g,%g %g,%g' stroke = 'rgb(255,0,0)'/>\n",
 				ax, ay, bx, by, cx, cy, dx, dy))
 		}
 	}
