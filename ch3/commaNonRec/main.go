@@ -27,6 +27,12 @@ func main() {
 // comma inserts commas in a non-negative decimal integer string.
 func comma(s string) string {
 	var buf bytes.Buffer
+
+	if s != "" && (s[0] == '+' || s[0] == '-') {
+		buf.WriteByte(s[0])
+		s = s[1:]
+	}
+
 	var j int
 	k := strings.IndexByte(s, '.')
 	if k != -1 {
@@ -38,12 +44,12 @@ func comma(s string) string {
 	if j == 0 {
 		j = 3
 	}
-	for i, v := range s {
+	for i, _ := range s {
 		if i == j && i < k {
 			buf.WriteByte(',')
 			j = j + 3
 		}
-		buf.WriteRune(v)
+		buf.WriteByte(s[i])
 	}
 	return buf.String()
 }
