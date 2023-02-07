@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -26,12 +27,19 @@ func main() {
 // comma inserts commas in a non-negative decimal integer string.
 func comma(s string) string {
 	var buf bytes.Buffer
-	j := len(s) % 3
+	var j int
+	k := strings.IndexByte(s, '.')
+	if k != -1 {
+		j = len(s[:k]) % 3
+	} else {
+		j = len(s) % 3
+		k = len(s)
+	}
 	if j == 0 {
 		j = 3
 	}
 	for i, v := range s {
-		if i == j {
+		if i == j && i < k {
 			buf.WriteByte(',')
 			j = j + 3
 		}
