@@ -47,9 +47,23 @@ outer:
 			}
 			ints = append(ints, int(x))
 		}
-		reverse(ints)
-		fmt.Printf("%v\n", ints)
-
+		input.Scan()
+		opt := strings.Fields(input.Text())
+		switch opt[0] {
+		case "rev":
+			reverse(ints)
+			fmt.Printf("%v\n", ints)
+		case "rot":
+			x, err := strconv.ParseInt(opt[1], 10, 64)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				continue outer
+			}
+			ints = rotate(ints, int(x))
+			fmt.Printf("%v\n", ints)
+		default:
+			continue outer
+		}
 	}
 	// NOTE: ignoring potential errors from input.Err()
 }
@@ -71,4 +85,14 @@ func reverse2(s *[N]int) {
 	for i, j := 0, N-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
+}
+
+// rotate s left by n positions
+func rotate(s []int, n int) []int {
+	N := len(s)
+	srot := make([]int, N)
+	for i := 0; i <= N-1; i++ {
+		srot[i] = s[(i+n)%N]
+	}
+	return srot
 }
