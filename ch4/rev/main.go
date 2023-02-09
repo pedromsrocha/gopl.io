@@ -30,6 +30,10 @@ func main() {
 	fmt.Println(s) // "[2 3 4 5 0 1]"
 	//!-slice
 
+	s2 := [5]int{1, 2, 3, 4, 5}
+	reverse2(&s2)
+	fmt.Println(s2)
+
 	// Interactive test of reverse.
 	input := bufio.NewScanner(os.Stdin)
 outer:
@@ -45,11 +49,12 @@ outer:
 		}
 		reverse(ints)
 		fmt.Printf("%v\n", ints)
+
 	}
 	// NOTE: ignoring potential errors from input.Err()
 }
 
-//!+rev
+// !+rev
 // reverse reverses a slice of ints in place.
 func reverse(s []int) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
@@ -58,3 +63,12 @@ func reverse(s []int) {
 }
 
 //!-rev
+
+// ex4.3: same as reverse above, but since we are using an array pointer we need to fix the length
+const N = 5
+
+func reverse2(s *[N]int) {
+	for i, j := 0, N-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
