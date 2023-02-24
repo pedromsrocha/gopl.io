@@ -9,6 +9,7 @@ package intset
 import (
 	"bytes"
 	"fmt"
+	"math/bits"
 )
 
 //!+intset
@@ -71,3 +72,12 @@ func (s *IntSet) String() string {
 }
 
 //!-string
+
+// Len() returns the number of elements in the set
+func (s *IntSet) Len() int {
+	len := 0
+	for _, w := range s.words {
+		len += bits.OnesCount64(w)
+	}
+	return len
+}
