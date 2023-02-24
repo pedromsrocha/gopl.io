@@ -110,3 +110,14 @@ func (s *IntSet) AddAll(elems ...int) {
 		s.Add(elem)
 	}
 }
+
+// IntersetcWith sets s to the intersection of s and t.
+func (s *IntSet) IntersectWith(t *IntSet) {
+	for i, tword := range t.words {
+		if i < len(s.words) {
+			s.words[i] &= tword
+		} else {
+			s.words[i] = 0
+		}
+	}
+}
