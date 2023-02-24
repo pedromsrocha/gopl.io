@@ -89,3 +89,10 @@ func (s *IntSet) Remove(x int) {
 		s.words[word] &^= 1 << bit
 	}
 }
+
+// Clear() removes all elements from the set
+func (s *IntSet) Clear() {
+	for i := range s.words {
+		s.words[i] = 0
+	}
+}

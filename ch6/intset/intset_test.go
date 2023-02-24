@@ -75,3 +75,15 @@ func TestRemove(t *testing.T) {
 		t.Errorf("x still has element 9\n")
 	}
 }
+
+func TestClear(t *testing.T) {
+	var x IntSet
+	x.Add(1)
+	x.Add(144)
+	x.Add(9)
+	x.Add(42)
+	x.Clear()
+	if x.Has(1) || x.Has(144) || x.Has(9) || x.Has(42) {
+		t.Errorf("x is not empty\n")
+	}
+}
