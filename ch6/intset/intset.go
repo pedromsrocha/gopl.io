@@ -96,3 +96,10 @@ func (s *IntSet) Clear() {
 		s.words[i] = 0
 	}
 }
+
+// Copy() returns a copy of the set
+func (s *IntSet) Copy() *IntSet {
+	t := &IntSet{words: make([]uint64, len(s.words))}
+	copy(t.words, s.words)
+	return t
+}

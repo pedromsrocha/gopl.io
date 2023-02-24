@@ -87,3 +87,18 @@ func TestClear(t *testing.T) {
 		t.Errorf("x is not empty\n")
 	}
 }
+
+func TestCopy(t *testing.T) {
+	var x IntSet
+	x.Add(1)
+	x.Add(144)
+	x.Add(9)
+	x.Add(42)
+	y := x.Copy()
+	if y.Len() != x.Len() {
+		t.Errorf("y has len distinct of x : y.Len() = %d  and x.Len() = %d\n", y.Len(), x.Len())
+	}
+	if !(y.Has(1) && y.Has(144) && y.Has(9) && y.Has(42)) {
+		t.Errorf("y does not have all the elements x has\n")
+	}
+}
