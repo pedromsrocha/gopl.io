@@ -63,3 +63,15 @@ func TestLen(t *testing.T) {
 		t.Errorf("x.Len() == %d\n", x.Len())
 	}
 }
+
+func TestRemove(t *testing.T) {
+	var x IntSet
+	x.Add(1)
+	x.Add(144)
+	x.Add(9)
+	x.Add(42)
+	x.Remove(9)
+	if x.Has(9) {
+		t.Errorf("x still has element 9\n")
+	}
+}

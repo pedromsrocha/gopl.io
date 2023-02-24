@@ -81,3 +81,11 @@ func (s *IntSet) Len() int {
 	}
 	return len
 }
+
+// Remove(x) removes element x from the set
+func (s *IntSet) Remove(x int) {
+	word, bit := x/64, uint(x%64)
+	if word < len(s.words) {
+		s.words[word] &^= 1 << bit
+	}
+}
