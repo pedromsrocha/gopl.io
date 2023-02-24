@@ -103,3 +103,10 @@ func (s *IntSet) Copy() *IntSet {
 	copy(t.words, s.words)
 	return t
 }
+
+// AddAll(elems) adds all elements elems to the set
+func (s *IntSet) AddAll(elems ...int) {
+	for _, elem := range elems {
+		s.Add(elem)
+	}
+}
