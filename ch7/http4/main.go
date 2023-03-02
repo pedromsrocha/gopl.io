@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 //!+main
@@ -19,6 +20,7 @@ func main() {
 	db := database{"shoes": 50, "socks": 5}
 	http.HandleFunc("/list", db.list)
 	http.HandleFunc("/price", db.price)
+	http.HandleFunc("/create", db.create)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
@@ -44,4 +46,19 @@ func (db database) price(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound) // 404
 		fmt.Fprintf(w, "no such item: %q\n", item)
 	}
+}
+
+func (db database) create(w http.ResponseWriter, req *http.Request) {
+	item := req.URL.Query().Get("item")
+	price := req.URL.Query().Get("price")
+	priceV, err := strconv.ParseFloat(price, 32)
+	if err != nil {
+		http.Error(w, "Price is not a valid number", http.StatusBadRequest)
+		return
+	}
+	if _, ok := db[item]; ok {
+		http.Error(w, fmt.Sprintf("Item %s already exists", item), http.StatusBadRequest)
+		return
+	}
+	db[item] = dollars(priceV)
 }
