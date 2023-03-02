@@ -12,12 +12,13 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 //!+main
 
 func main() {
-	db := database{"shoes": 50, "socks": 5}
+	db := &database{m: map[string]dollars{"shoes": 50, "socks": 5}}
 	http.HandleFunc("/list", db.list)
 	http.HandleFunc("/price", db.price)
 	http.HandleFunc("/create", db.create)
@@ -32,17 +33,24 @@ type dollars float32
 
 func (d dollars) String() string { return fmt.Sprintf("$%.2f", d) }
 
-type database map[string]dollars
-
-func (db database) list(w http.ResponseWriter, req *http.Request) {
-	for item, price := range db {
-		fmt.Fprintf(w, "%s: %s\n", item, price)
-	}
+type database struct {
+	m  map[string]dollars
+	mu sync.Mutex
 }
 
-func (db database) price(w http.ResponseWriter, req *http.Request) {
+func (db *database) list(w http.ResponseWriter, req *http.Request) {
+	db.mu.Lock()
+	for item, price := range db.m {
+		fmt.Fprintf(w, "%s: %s\n", item, price)
+	}
+	db.mu.Unlock()
+}
+
+func (db *database) price(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
-	if price, ok := db[item]; ok {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	if price, ok := db.m[item]; ok {
 		fmt.Fprintf(w, "%s\n", price)
 	} else {
 		w.WriteHeader(http.StatusNotFound) // 404
@@ -50,7 +58,7 @@ func (db database) price(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (db database) create(w http.ResponseWriter, req *http.Request) {
+func (db *database) create(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 	price := req.URL.Query().Get("price")
 	priceV, err := strconv.ParseFloat(price, 32)
@@ -58,23 +66,27 @@ func (db database) create(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Price is not a valid number", http.StatusBadRequest)
 		return
 	}
-	if _, ok := db[item]; ok {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	if _, ok := db.m[item]; ok {
 		http.Error(w, fmt.Sprintf("Item %s already exists", item), http.StatusBadRequest)
 		return
 	}
-	db[item] = dollars(priceV)
+	db.m[item] = dollars(priceV)
 }
 
-func (db database) delete(w http.ResponseWriter, req *http.Request) {
+func (db *database) delete(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
-	if _, ok := db[item]; !ok {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	if _, ok := db.m[item]; !ok {
 		http.Error(w, fmt.Sprintf("Item %s does not exist", item), http.StatusBadRequest)
 		return
 	}
-	delete(db, item)
+	delete(db.m, item)
 }
 
-func (db database) update(w http.ResponseWriter, req *http.Request) {
+func (db *database) update(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 	price := req.URL.Query().Get("price")
 	priceV, err := strconv.ParseFloat(price, 32)
@@ -82,9 +94,11 @@ func (db database) update(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Price is not a valid number", http.StatusBadRequest)
 		return
 	}
-	if _, ok := db[item]; !ok {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	if _, ok := db.m[item]; !ok {
 		http.Error(w, fmt.Sprintf("Item %s does not exist", item), http.StatusBadRequest)
 		return
 	}
-	db[item] = dollars(priceV)
+	db.m[item] = dollars(priceV)
 }
