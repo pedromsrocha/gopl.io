@@ -21,6 +21,8 @@ func main() {
 	http.HandleFunc("/list", db.list)
 	http.HandleFunc("/price", db.price)
 	http.HandleFunc("/create", db.create)
+	http.HandleFunc("/delete", db.delete)
+	http.HandleFunc("/update", db.update)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
@@ -58,6 +60,30 @@ func (db database) create(w http.ResponseWriter, req *http.Request) {
 	}
 	if _, ok := db[item]; ok {
 		http.Error(w, fmt.Sprintf("Item %s already exists", item), http.StatusBadRequest)
+		return
+	}
+	db[item] = dollars(priceV)
+}
+
+func (db database) delete(w http.ResponseWriter, req *http.Request) {
+	item := req.URL.Query().Get("item")
+	if _, ok := db[item]; !ok {
+		http.Error(w, fmt.Sprintf("Item %s does not exist", item), http.StatusBadRequest)
+		return
+	}
+	delete(db, item)
+}
+
+func (db database) update(w http.ResponseWriter, req *http.Request) {
+	item := req.URL.Query().Get("item")
+	price := req.URL.Query().Get("price")
+	priceV, err := strconv.ParseFloat(price, 32)
+	if err != nil {
+		http.Error(w, "Price is not a valid number", http.StatusBadRequest)
+		return
+	}
+	if _, ok := db[item]; !ok {
+		http.Error(w, fmt.Sprintf("Item %s does not exist", item), http.StatusBadRequest)
 		return
 	}
 	db[item] = dollars(priceV)
