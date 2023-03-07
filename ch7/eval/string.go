@@ -15,7 +15,7 @@ func (u unary) String() string {
 }
 
 func (b binary) String() string {
-	return b.x.String() + string(b.op) + b.y.String()
+	return "(" + b.x.String() + ")" + string(b.op) + "(" + b.y.String() + ")"
 }
 
 func (c call) String() string {
