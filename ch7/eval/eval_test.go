@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-//!+Eval
+// !+Eval
 func TestEval(t *testing.T) {
 	tests := []struct {
 		expr string
@@ -26,6 +26,9 @@ func TestEval(t *testing.T) {
 		// additional tests that don't appear in the book
 		{"-1 + -x", Env{"x": 1}, "-2"},
 		{"-1 - x", Env{"x": 1}, "-2"},
+		{"min(x+y, y-x)", Env{"x": 2, "y": 3}, "1"},
+		{"min(x+y, y-x)", Env{"x": -2, "y": 3}, "1"},
+		{"min(x+y, y-x)", Env{"x": -2, "y": 2}, "0"},
 		//!+Eval
 	}
 	var prevExpr string

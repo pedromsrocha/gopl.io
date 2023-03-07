@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-//!+TestCoverage
+// !+TestCoverage
 func TestCoverage(t *testing.T) {
 	var tests = []struct {
 		input string
@@ -23,6 +23,8 @@ func TestCoverage(t *testing.T) {
 		{"sqrt(A / pi)", Env{"A": 87616, "pi": math.Pi}, "167"},
 		{"pow(x, 3) + pow(y, 3)", Env{"x": 9, "y": 10}, "1729"},
 		{"5 / 9 * (F - 32)", Env{"F": -40}, "-40"},
+		{"min(2,5)", nil, "2"},
+		{"min(2)", nil, "call to min has 1 args, want 2"},
 	}
 
 	for _, test := range tests {
