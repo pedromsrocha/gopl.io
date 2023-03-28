@@ -22,7 +22,12 @@ import (
 
 var vFlag = flag.Bool("v", false, "show verbose progress messages")
 
-//!+
+type SizeRoot struct {
+	size int64
+	root string
+}
+
+// !+
 func main() {
 	// ...determine roots...
 
@@ -37,11 +42,11 @@ func main() {
 
 	//!+
 	// Traverse each root of the file tree in parallel.
-	fileSizes := make(chan int64)
+	fileSizes := make(chan SizeRoot)
 	var n sync.WaitGroup
 	for _, root := range roots {
 		n.Add(1)
-		go walkDir(root, &n, fileSizes)
+		go walkDir(root, root, &n, fileSizes)
 	}
 	go func() {
 		n.Wait()
@@ -54,16 +59,16 @@ func main() {
 	if *vFlag {
 		tick = time.Tick(500 * time.Millisecond)
 	}
-	var nfiles, nbytes int64
+	nfiles, nbytes := make(map[string]int64), make(map[string]int64)
 loop:
 	for {
 		select {
-		case size, ok := <-fileSizes:
+		case sizeroot, ok := <-fileSizes:
 			if !ok {
 				break loop // fileSizes was closed
 			}
-			nfiles++
-			nbytes += size
+			nfiles[sizeroot.root]++
+			nbytes[sizeroot.root] += sizeroot.size
 		case <-tick:
 			printDiskUsage(nfiles, nbytes)
 		}
@@ -76,29 +81,31 @@ loop:
 
 //!-
 
-func printDiskUsage(nfiles, nbytes int64) {
-	fmt.Printf("%d files  %.1f GB\n", nfiles, float64(nbytes)/1e9)
+func printDiskUsage(nfiles, nbytes map[string]int64) {
+	for root, nfile := range nfiles {
+		fmt.Printf("%s root %d files  %.1f GB\n", root, nfile, float64(nbytes[root])/1e9)
+	}
 }
 
 // walkDir recursively walks the file tree rooted at dir
 // and sends the size of each found file on fileSizes.
-//!+walkDir
-func walkDir(dir string, n *sync.WaitGroup, fileSizes chan<- int64) {
+// !+walkDir
+func walkDir(root string, dir string, n *sync.WaitGroup, fileSizes chan<- SizeRoot) {
 	defer n.Done()
 	for _, entry := range dirents(dir) {
 		if entry.IsDir() {
 			n.Add(1)
 			subdir := filepath.Join(dir, entry.Name())
-			go walkDir(subdir, n, fileSizes)
+			go walkDir(root, subdir, n, fileSizes)
 		} else {
-			fileSizes <- entry.Size()
+			fileSizes <- SizeRoot{size: entry.Size(), root: root}
 		}
 	}
 }
 
 //!-walkDir
 
-//!+sema
+// !+sema
 // sema is a counting semaphore for limiting concurrency in dirents.
 var sema = make(chan struct{}, 20)
 
