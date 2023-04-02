@@ -16,7 +16,7 @@ import (
 )
 
 // !+broadcaster
-type client chan<- string // an outgoing message channel
+type client chan string // an outgoing message channel
 
 var (
 	entering = make(chan struct {
@@ -25,6 +25,7 @@ var (
 	})
 	leaving  = make(chan client)
 	messages = make(chan string) // all incoming client messages
+	N        = 10                //buffer channel capacity
 )
 
 func broadcaster() {
@@ -35,6 +36,9 @@ func broadcaster() {
 			// Broadcast incoming message to all
 			// clients' outgoing message channels.
 			for cli := range clients {
+				if len(cli) == N {
+					<-cli
+				}
 				cli <- msg
 			}
 
@@ -60,7 +64,7 @@ func announceCurrentClients(clients map[client]string) {
 
 // !+handleConn
 func handleConn(conn net.Conn) {
-	ch := make(chan string) // outgoing client messages
+	ch := make(chan string, N) // outgoing client messages
 	go clientWriter(conn, ch)
 
 	ch <- "Who are you?"
