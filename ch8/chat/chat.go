@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 // !+broadcaster
@@ -70,14 +71,28 @@ func handleConn(conn net.Conn) {
 		ch client
 	}{ch: ch, id: who}
 	input := bufio.NewScanner(conn)
+	active := make(chan struct{})
+	go disconnectIdle(active, time.NewTimer(5*time.Minute), conn, ch, who)
 	for input.Scan() {
 		messages <- who + ": " + input.Text()
+		active <- struct{}{}
 	}
 	// NOTE: ignoring potential errors from input.Err()
 
 	leaving <- ch
 	messages <- who + " has left"
 	conn.Close()
+}
+
+func disconnectIdle(active chan struct{}, t *time.Timer, conn net.Conn, ch chan string, who string) {
+	select {
+	case <-active:
+		t.Reset(5 * time.Minute)
+	case <-t.C:
+		leaving <- ch
+		messages <- who + " has left"
+		conn.Close()
+	}
 }
 
 func clientWriter(conn net.Conn, ch <-chan string) {
