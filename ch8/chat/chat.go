@@ -14,17 +14,20 @@ import (
 	"net"
 )
 
-//!+broadcaster
+// !+broadcaster
 type client chan<- string // an outgoing message channel
 
 var (
-	entering = make(chan client)
+	entering = make(chan struct {
+		id string
+		ch client
+	})
 	leaving  = make(chan client)
 	messages = make(chan string) // all incoming client messages
 )
 
 func broadcaster() {
-	clients := make(map[client]bool) // all connected clients
+	clients := make(map[client]string) // all connected clients
 	for {
 		select {
 		case msg := <-messages:
@@ -35,7 +38,8 @@ func broadcaster() {
 			}
 
 		case cli := <-entering:
-			clients[cli] = true
+			clients[cli.ch] = cli.id
+			go announceCurrentClients(clients)
 
 		case cli := <-leaving:
 			delete(clients, cli)
@@ -46,7 +50,14 @@ func broadcaster() {
 
 //!-broadcaster
 
-//!+handleConn
+func announceCurrentClients(clients map[client]string) {
+	messages <- "The following clients are in the chat:"
+	for _, id := range clients {
+		messages <- id
+	}
+}
+
+// !+handleConn
 func handleConn(conn net.Conn) {
 	ch := make(chan string) // outgoing client messages
 	go clientWriter(conn, ch)
@@ -54,8 +65,10 @@ func handleConn(conn net.Conn) {
 	who := conn.RemoteAddr().String()
 	ch <- "You are " + who
 	messages <- who + " has arrived"
-	entering <- ch
-
+	entering <- struct {
+		id string
+		ch client
+	}{ch: ch, id: who}
 	input := bufio.NewScanner(conn)
 	for input.Scan() {
 		messages <- who + ": " + input.Text()
@@ -75,7 +88,7 @@ func clientWriter(conn net.Conn, ch <-chan string) {
 
 //!-handleConn
 
-//!+main
+// !+main
 func main() {
 	listener, err := net.Listen("tcp", "localhost:8000")
 	if err != nil {
