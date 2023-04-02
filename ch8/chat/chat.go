@@ -63,14 +63,16 @@ func handleConn(conn net.Conn) {
 	ch := make(chan string) // outgoing client messages
 	go clientWriter(conn, ch)
 
-	who := conn.RemoteAddr().String()
+	ch <- "Who are you?"
+	input := bufio.NewScanner(conn)
+	input.Scan()
+	who := input.Text()
 	ch <- "You are " + who
 	messages <- who + " has arrived"
 	entering <- struct {
 		id string
 		ch client
 	}{ch: ch, id: who}
-	input := bufio.NewScanner(conn)
 	active := make(chan struct{})
 	go disconnectIdle(active, time.NewTimer(5*time.Minute), conn, ch, who)
 	for input.Scan() {
